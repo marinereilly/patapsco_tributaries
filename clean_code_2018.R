@@ -85,4 +85,62 @@ nls.stats <- ddply(light_profile2, "siteid",
                      c(coef(summary(r)))})
 colnames(nls.stats)<-c("siteid", "a", "b", "a.err", "b.err", "a.tval", "b.tval", "a.Pr(>|t|)", "b.Pr(>|t|)")
 
+light_profile2$plot_id<-paste(light_profile$siteid, "_light")
 
+l_nest<-light_profile2 %>% 
+  group_by(plot_id) %>% 
+  nest()
+#####make iratio plots#####
+l_plots<-l_nest %>% 
+  mutate(plot=map2(data, plot_id, ~ggplot(data=.x) +
+                     ggtitle(.y)+
+                     theme_classic()+
+                     scale_y_reverse(expand = c(0, 0))+
+                     scale_x_continuous(position = "top", limits = c(0,1))+
+                     ylab("depth (m)")+
+                     theme(axis.line = element_line(linetype = "solid"), 
+                           axis.ticks = element_line(size = 1), 
+                           panel.grid.major = element_line(colour = "gray80", 
+                                                           linetype = "dotted"), panel.grid.minor = element_line(colour = "gray90", 
+                                                                                                                 linetype = "dotted"), axis.title = element_text(size = 12), 
+                           axis.text = element_text(size = 10), 
+                           plot.title = element_text(size = 16, 
+                                                     face = "bold"))+
+                     geom_point(aes(x=Iratio, y=z),size=2, color="turquoise3")+
+                     geom_path(aes(x=Iratio, y=z),size=1, color="turquoise3")+
+                     geom_hline(aes(yintercept=1.75), color="white")))
+l_plots$plot[[2]]
+k_plots<-nls.stats %>% 
+  mutate(plot=map2(a,b, ~ggplot()+
+                     stat_function(fun=function(z) .x*exp(.y*z), geom="line", color="red")))
+k_plots[[1]]
+
+
+
+
+if(!dir.exists("./figures")){ #if a figures folder does not exist, create it.
+  dir.create("./figures")
+}
+#use the map function with ggsave to save named figures. 
+dir.create("./figures/lp_plots")
+map2(paste0("./figures/lp_plots/", l_plots$plot_id, ".jpg"), l_plots$plot, ggsave)
+map2(paste0("./figures/lp_plots/", l_plots$plot_id, ".pdf"), l_plots$plot, ggsave)
+
+#####Trying to make kd equations work!!!#####
+stat_kd<-function(df)
+  {
+  library(broom)
+  ddply(df,"siteid",
+       function(u) {
+         r <- nls(Iratio ~ a*exp(b*z), data=u, start=list(a=0.5, b=-2.5))
+         tidy(r)%>% 
+           select(-(std.error:p.value)) %>% 
+           spread(term, estimate)})
+  }
+
+pat_kd<-stat_kd(light_profile2)
+
+kd_eq<-function(df){
+  q<-stat_kd(df)
+  mutate(q,kd_eq= pmap(list(siteid,a,b), )
+}
