@@ -36,15 +36,15 @@ light_profile<-site_id(light_profile)
 vertical_profile2<-vertical_profile %>% 
   select(siteid,creek,station,date, boat_depth, sonde_depth,
          temperature,ODO_sat,ODO_conc,sp_cond,salinity,
-         turbidity_ntu,`chl (ug/L)`) %>% 
+         turbidity_ntu,`chl (ug/L)`) %>% #This gets rid of the weather stations and other data I'm not interested in right now
   gather(., key = parameter, value = measurement, temperature,ODO_sat,ODO_conc,
-         sp_cond,salinity,turbidity_ntu,`chl (ug/L)`)
+         sp_cond,salinity,turbidity_ntu,`chl (ug/L)`) #Converts the data from wide format to long format
 vp<-vertical_profile2
 vp$plot_id<-paste0(vp$siteid, "_",vp$parameter)
 vp$measurement<-as.numeric(vp$measurement)
 vnest<-vp %>% 
   group_by(plot_id) %>% 
-  nest()
+  nest()#Makes a dataframe within a dataframe so you can use purrr
 #####Making the Plots#####
 v_plot<-vnest %>% 
   mutate(plot=map2(data, plot_id, ~ggplot(data=.x) +
@@ -73,3 +73,16 @@ if(!dir.exists("./figures")){ #if a figures folder does not exist, create it.
 dir.create("./figures/vp_plots")
 map2(paste0("./figures/vp_plots/", v_plot$plot_id, ".jpg"), v_plot$plot, ggsave)
 map2(paste0("./figures/vp_plots/", v_plot$plot_id, ".pdf"), v_plot$plot, ggsave)
+
+#####Formatting Light Profiles for Plotting#####
+light_profile2<-light_profile %>% 
+  mutate(Iratio= Iz/Io) %>% #ratio of surface to light at depth
+  select(siteid,Iratio, z, boat_depth=depth) #selecting just the needed columns
+
+nls.stats <- ddply(light_profile2, "siteid",
+                   function(u) {
+                     r <- nls(Iratio ~ a*exp(b*z), data=u, start=list(a=0.5, b=-2.5))
+                     c(coef(summary(r)))})
+colnames(nls.stats)<-c("siteid", "a", "b", "a.err", "b.err", "a.tval", "b.tval", "a.Pr(>|t|)", "b.Pr(>|t|)")
+
+
