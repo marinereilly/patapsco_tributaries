@@ -79,12 +79,6 @@ light_profile2<-light_profile %>%
   mutate(Iratio= Iz/Io) %>% #ratio of surface to light at depth
   select(siteid,Iratio, z, boat_depth=depth) #selecting just the needed columns
 
-nls.stats <- ddply(light_profile2, "siteid",
-                   function(u) {
-                     r <- nls(Iratio ~ a*exp(b*z), data=u, start=list(a=0.5, b=-2.5))
-                     c(coef(summary(r)))})
-colnames(nls.stats)<-c("siteid", "a", "b", "a.err", "b.err", "a.tval", "b.tval", "a.Pr(>|t|)", "b.Pr(>|t|)")
-
 light_profile2$plot_id<-paste(light_profile$siteid, "_light")
 
 l_nest<-light_profile2 %>% 
@@ -110,13 +104,6 @@ l_plots<-l_nest %>%
                      geom_path(aes(x=Iratio, y=z),size=1, color="turquoise3")+
                      geom_hline(aes(yintercept=1.75), color="white")))
 l_plots$plot[[2]]
-k_plots<-nls.stats %>% 
-  mutate(plot=map2(a,b, ~ggplot()+
-                     stat_function(fun=function(z) .x*exp(.y*z), geom="line", color="red")))
-k_plots[[1]]
-
-
-
 
 if(!dir.exists("./figures")){ #if a figures folder does not exist, create it.
   dir.create("./figures")
@@ -129,6 +116,7 @@ map2(paste0("./figures/lp_plots/", l_plots$plot_id, ".pdf"), l_plots$plot, ggsav
 #####Trying to make kd equations work!!!#####
 stat_kd<-function(df)
   {
+  library(plyr)
   library(broom)
   ddply(df,"siteid",
        function(u) {
@@ -140,7 +128,49 @@ stat_kd<-function(df)
 
 pat_kd<-stat_kd(light_profile2)
 
-kd_eq<-function(df){
-  q<-stat_kd(df)
-  mutate(q,kd_eq= pmap(list(siteid,a,b), )
-}
+k_plots<-pat_kd %>% 
+  pmap(~(ggplot()+
+           stat_function(aes(x=seq(0,5,0.01)),
+                         fun = function(x,b) 1000*exp(b*x),
+                         args = list(b =..3), color= "red", size = 1)+
+           labs(title = paste0(..1,"_light"),
+                subtitle = paste0("kd = ",..3))+
+           xlab("Depth (m)")+
+           ylab("Iz")+
+           coord_flip()+
+           scale_y_continuous(position = "bottom")+
+           scale_x_reverse()+
+           theme_classic()
+  ))
+
+#####Trying to make light plots with data and kd model prediction!###
+lk_nest<-light_profile2 %>% 
+  group_by(plot_id,boat_depth) %>% 
+  nest() %>% 
+  mutate(kd=map(data, ~stat_kd(.))) %>% 
+  unnest(kd) %>% 
+  select(plot_id,a,b,boat_depth,data)
+  
+  
+  lk_plots<-lk_nest %>% 
+    pmap(~(ggplot()+
+             stat_function(aes(x=seq(0,..4,0.01)),
+                           fun = function(x,a,b) a*exp(b*x),
+                           args = list(a=..2, b =..3), color= "red", size = 1)+
+             labs(title = ..1,
+                  subtitle = paste0("kd = ",..3))+
+             geom_point(data= ..5, aes(x=z, y=Iratio))+
+             xlab("Depth (m)")+
+             ylab("Iz")+
+             coord_flip()+
+             scale_y_continuous(position = "bottom")+
+             scale_x_reverse()+
+             theme_classic()
+  ))
+
+  Myplots = lk_plots
+  # saves all flux regresssions in single pdf
+  pdf("pat_light_kd_plots.pdf")
+  Myplots
+  dev.off
+  
