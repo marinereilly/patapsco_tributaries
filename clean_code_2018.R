@@ -40,6 +40,7 @@ vertical_profile2<-vertical_profile %>%
   gather(., key = parameter, value = measurement, temperature,ODO_sat,ODO_conc,
          sp_cond,salinity,turbidity_ntu,`chl (ug/L)`) #Converts the data from wide format to long format
 vp<-vertical_profile2
+vp$parameter<-revalue(vp$parameter, c("chl (ug/L)"="chl_ugL"))
 vp$plot_id<-paste0(vp$siteid, "_",vp$parameter)
 vp$measurement<-as.numeric(vp$measurement)
 vnest<-vp %>% 
