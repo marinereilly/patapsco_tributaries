@@ -31,9 +31,13 @@ ggsave("Chl.pdf")
 tss <- read_excel("H:/0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/RAW_DATA/patapsco_TSS.xlsx",
 sheet = "data_for_processing")
 
-tss$Creek<-case_when(
-  tss$creek==""
-)
+tss$Creek<-revalue(tss$creek, c("middle"= "MB",
+                              "inner"= "IH",
+                              "rock"="RC",
+                              "stoney"="SC",
+                              "bear"="BC",
+                              "curtis"="CC"))
+
 
 b<-ggplot(data=tss) +
   ggtitle("TSS")+
