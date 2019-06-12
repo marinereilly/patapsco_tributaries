@@ -41,3 +41,56 @@ if(!dir.exists("./figures")){ #if a figures folder does not exist, create it.
 dir.create("./figures/nasl_plots")
 map2(paste0("./figures/nasl_plots/", nasl_plot$Parameter, ".jpg"), nasl_plot$plot, ggsave)
 map2(paste0("./figures/nasl_plots/", nasl_plot$Parameter, ".pdf"), nasl_plot$plot, ggsave)
+
+
+#Calvert NASL DATA addition
+library(readxl)
+calvert <- read_excel("H:/0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/NASL/calvertcreeks_2016_07_21.xlsx")
+library(stringr)
+calvert<-calvert %>% 
+  drop_na(Parameter)
+calvert<-calvert %>% 
+  mutate(depth=str_sub(`Sample ID`,-1)) %>% 
+  mutate(depth2=case_when(
+    depth=="E"  ~ "SW",
+    depth=="M"  ~ "BW",
+    depth=="S"  ~ "SW",
+    depth=="B"  ~ "BW",
+    TRUE        ~ "Cookies")) %>% 
+  mutate(creek=str_sub(`Sample ID`,1,1))%>% 
+  filter(creek=="H"|
+           creek=="I"|
+           creek=="S") 
+calvert_mean<-calvert %>% 
+  group_by(creek, depth2, Parameter) %>% 
+  summarise(Result=mean(Result)) %>% 
+  mutate(pat_trib="NO") %>% 
+  filter(!c(Parameter=="DON"|
+              Parameter=="NH4"|
+              Parameter=="NO23"))
+write_csv(calvert_mean,"calvert-means-2016.csv")
+
+# Junk below here
+pat_cal<-calvert_mean %>% 
+  rename(depth=depth2) %>% 
+  full_join(nasl,.)
+pat_cal$creek <- factor(pat_cal$creek, levels = c("RC", "SC", "CC", "MB", "IH", "BC","H","I","S"))
+
+ca_nest<-calvert_mean %>% 
+  group_by(Parameter) %>% 
+  nest() 
+cal_plot<-ca_nest %>% 
+  mutate(plot=map2(data, Parameter, ~ggplot(data=.x) +
+                     ggtitle(.y)+
+                     theme_classic()+
+                     theme(axis.line = element_line(linetype = "solid"), 
+                           axis.ticks = element_line(size = 1), 
+                           panel.grid.major = element_line(colour = "gray80", 
+                                                           linetype = "dotted"), panel.grid.minor = element_line(colour = "gray90", 
+                                                                                                                 linetype = "dotted"), axis.title = element_text(size = 12), 
+                           axis.text = element_text(size = 10), 
+                           plot.title = element_text(size = 16, 
+                                                     face = "bold"))+
+                     geom_bar(aes(x=creek, y=Result, fill=depth), position="dodge", stat="identity")
+  ))
+cal_plot$plot[[2]]
