@@ -35,13 +35,13 @@ light_profile<-site_id(light_profile)
 #####Formatting Vertical Profiles for Plotting#####
 vertical_profile2<-vertical_profile %>% 
   select(siteid,creek,station,date, boat_depth, sonde_depth,
-         temperature,ODO_sat,ODO_conc,sp_cond,salinity,
+         temperature,ODO_sat,ODO_conc,sp_cond_2018,sp_cond_2019,salinity,
          turbidity_ntu,`chl (ug/L)`) %>% #This gets rid of the weather stations and other data I'm not interested in right now
   gather(., key = parameter, value = measurement, temperature,ODO_sat,ODO_conc,
-         sp_cond,salinity,turbidity_ntu,`chl (ug/L)`) #Converts the data from wide format to long format
+         sp_cond_2018,sp_cond_2019,salinity,turbidity_ntu,`chl (ug/L)`) #Converts the data from wide format to long format
 vp<-vertical_profile2
 vp$parameter<-revalue(vp$parameter, c("chl (ug/L)"="chl_ugL"))
-vp$plot_id<-paste0(vp$siteid, "_",vp$parameter)
+vp$plot_id<-paste0(vp$siteid, "_",vp$parameter, vp$date)
 vp$measurement<-as.numeric(vp$measurement)
 vnest<-vp %>% 
   group_by(plot_id) %>% 
@@ -80,7 +80,7 @@ light_profile2<-light_profile %>%
   mutate(Iratio= Iz/Io) %>% #ratio of surface to light at depth
   select(siteid,Iratio, z, boat_depth=depth) #selecting just the needed columns
 
-light_profile2$plot_id<-paste(light_profile$siteid, "_light")
+light_profile2$plot_id<-paste(light_profile$siteid, "_light", light_profile$date)
 
 l_nest<-light_profile2 %>% 
   group_by(plot_id) %>% 
