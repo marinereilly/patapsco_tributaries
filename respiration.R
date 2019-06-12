@@ -1,5 +1,6 @@
 library(dplyr)
 library(lubridate)
+library(formattable)
 
 library(readxl)
 df <- read_excel("H:/0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/RAW_DATA/respiration_data.xlsx")
@@ -38,3 +39,9 @@ df_rates<-df_rates %>%
   select(sampleid, time_elapsed_hr, DO_conc_mg_Lhr, DO_sat_hr)
 
 View(df_rates)
+
+formattable(df_rates,
+            align= c("l", "c", "c", "r"),
+            list(sampleid=formatter(
+              "span", style= ~style(color = "grey", font.weight = "bold"))
+            ))
