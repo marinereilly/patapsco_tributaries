@@ -41,7 +41,13 @@ vertical_profile2<-vertical_profile %>%
          sp_cond_2018,sp_cond_2019,salinity,turbidity_ntu,`chl (ug/L)`) #Converts the data from wide format to long format
 vp<-vertical_profile2
 vp$parameter<-revalue(vp$parameter, c("chl (ug/L)"="chl_ugL"))
+###Change the plot_id to match what you want
+#One station/one analyte - vp$plot_id<-paste0(vp$siteid, "_",vp$parameter, vp$date)
+#One creek/one analyte - vp$plot_id<-paste0(vp$creek, "_",vp$parameter, vp$date)
+#by proximity to patapsco - vp$plot_id<-paste0(vp$station, "_",vp$parameter, vp$date)
+
 vp$plot_id<-paste0(vp$siteid, "_",vp$parameter, vp$date)
+
 vp$measurement<-as.numeric(vp$measurement)
 vnest<-vp %>% 
   group_by(plot_id) %>% 

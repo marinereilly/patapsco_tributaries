@@ -9,15 +9,32 @@ nasl2<-nasl2 %>%
   separate('Sample ID', into = c("depth", "creek", "distance"),
            sep= c(2, 4))
 nasl<-nasl %>% 
-  select(plotid='Sample ID', Parameter, Result) %>% 
-  full_join(., nasl2)
+  select(plotid='Sample ID', date='Sample Date',Parameter, Result) %>% 
+  full_join(., nasl2) 
+nasl$depth<-factor(nasl$depth, levels=c("SW", "BW"))
+nasl$date<-mdy(nasl$date)
+nasl$month<-months(nasl$date)
+nasl$year<-year(nasl$date)
+nasl<-nasl %>% 
+  mutate(p_date=
+           paste0(Parameter, " ~ ", month," ", year)) %>% 
+  select(-date, -month, -year)
+
 View(nasl)
 
+station_names<-c(
+  'D'="Down",
+  'M'="Middle",
+  'U'="Upper")
+depth_pal<-c("SW"="goldenrod2", "BW"="firebrick3")
+
+#This only works if all sites sampled in the same month - they were not in 2018
+#so you would want to replace p_date with Parameter
 nasl_nest<-nasl %>% 
-  group_by(Parameter) %>% 
+  group_by(p_date) %>% 
   nest()
 nasl_plot<-nasl_nest %>% 
-  mutate(plot=map2(data, Parameter, ~ggplot(data=.x) +
+  mutate(plot=map2(data, p_date, ~ggplot(data=.x) +
                      ggtitle(.y)+
                      theme_classic()+
                      theme(axis.line = element_line(linetype = "solid"), 
@@ -28,11 +45,12 @@ nasl_plot<-nasl_nest %>%
                            axis.text = element_text(size = 10), 
                            plot.title = element_text(size = 16, 
                                                      face = "bold"))+
-                     geom_bar(aes(x=creek, y=Result, fill=depth), position="dodge", stat="identity")+
-                     facet_wrap(distance~., nrow=1)
+                     geom_bar(aes(x=creek, y=Result, fill=depth), position="dodge", stat="identity", color="black")+
+                     scale_fill_manual(values = depth_pal)+
+                     facet_wrap(distance~., nrow=1, labeller = as_labeller(station_names))
   ))
                      
-nasl_plot$plot[[2]] #too look at one of the plots
+nasl_plot$plot[[3]] #too look at one of the plots
 
 if(!dir.exists("./figures")){ #if a figures folder does not exist, create it.
   dir.create("./figures")
