@@ -1,13 +1,17 @@
 library(tidyverse)
 
-nasl <- read_csv("H:/0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/NASL/HARRIS_PATAPSCO_092418.csv")
+nasl <- read_csv("H:/0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/RAW_DATA/NASL/HARRIS_PATAPSCO_052819.csv")
+nasl<-nasl %>% mutate(Result=as.numeric(Result))
+nasl<-nasl %>% 
+  drop_na('Sample ID')
+  
 
 nasl2<-nasl %>%
   select('Sample ID') 
 nasl2$plotid<-nasl2$`Sample ID`
 nasl2<-nasl2 %>% 
   separate('Sample ID', into = c("depth", "creek", "distance"),
-           sep= c(2, 4))
+           sep= "-")
 nasl<-nasl %>% 
   select(plotid='Sample ID', date='Sample Date',Parameter, Result) %>% 
   full_join(., nasl2) 
@@ -18,7 +22,8 @@ nasl$year<-year(nasl$date)
 nasl<-nasl %>% 
   mutate(p_date=
            paste0(Parameter, " ~ ", month," ", year)) %>% 
-  select(-date, -month, -year)
+  select(-date, -month, -year) 
+  
 
 View(nasl)
 
@@ -57,8 +62,8 @@ if(!dir.exists("./figures")){ #if a figures folder does not exist, create it.
 }
 #use the map function with ggsave to save named figures. 
 dir.create("./figures/nasl_plots")
-map2(paste0("./figures/nasl_plots/", nasl_plot$Parameter, ".jpg"), nasl_plot$plot, ggsave)
-map2(paste0("./figures/nasl_plots/", nasl_plot$Parameter, ".pdf"), nasl_plot$plot, ggsave)
+map2(paste0("./figures/nasl_plots/", nasl_plot$p_date, ".jpg"), nasl_plot$plot, ggsave)
+
 
 
 #Calvert NASL DATA addition
