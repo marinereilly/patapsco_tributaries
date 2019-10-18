@@ -45,3 +45,17 @@ formattable(df_rates,
             list(sampleid=formatter(
               "span", style= ~style(color = "grey", font.weight = "bold"))
             ))
+
+#plot rates?
+df_rates2<-df_rates %>% 
+  separate(.,sampleid,into= c("creek","date_collected"), sep="_") %>% 
+  mutate(date_collected=lubridate::ymd(date_collected)) %>% 
+  mutate(month=lubridate::month(date_collected, label=TRUE))
+pl<-df_rates2 %>% 
+  ggplot(aes(x=creek, y=DO_conc_mg_Lhr, fill=month))
+plo<-pl +
+  geom_bar(stat="identity", position = "dodge", color="black")+
+  theme_minimal()+
+  ylab("Change in Dissolved Oxygen (mg/L hr-1)")+
+  xlab("Creek")
+plo
