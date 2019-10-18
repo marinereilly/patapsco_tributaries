@@ -53,7 +53,6 @@ prepped <- lp %>%
     x_values = purrr::map(seq_along(nrow(.)), ~x_values),
     y_values = purrr::pmap(list(x_values, b), 
                            function(x_values, b) 1000*exp(b*x_values))) %>%
-  #dplyr::select(-intercept, -l_plot_size) %>%
   tidyr::unnest(x_values, y_values) %>%
   dplyr::group_nest(c_plotid)
 
@@ -70,3 +69,9 @@ plots<-prepped %>%
                 theme_classic()
             }))
 plots$plot[[6]]
+plots$savename<-gsub("~","_",plots$c_plotid)
+
+
+dir.create("./figures/light_profiles")
+map2(paste0("./figures/light_profiles/", plots$savename, ".jpg"), plots$plot, ggsave)
+
