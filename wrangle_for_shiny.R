@@ -18,14 +18,18 @@ param<-c("kd",
          "phaeophytin",
          "tss",
          "delta_sigmat",
-         "mixed")
+         "mixed", 
+         "DO_conc_mg_Lhr",
+         "chl_tss")
 units<-c("m-1",
          "ug/L",
          "ug/L",
          "ug/L",
          "mg/L",
          "none",
-         "none")
+         "none",
+         "mg/Lhr",
+         "npne")
 param_units<-data.frame(param, units)
 
 ######starting with kd which has its own script in theory.#####
