@@ -3,7 +3,7 @@ library(ggplot2)
 library(dplyr)
 
 #Add load data stuff here 
-#pat_full<-LOAD DATA SOMEHOW
+pat_full<-readRDS("patapsco_wide.rds")
 
 ui <- fluidPage(
   titlePanel("Patapsco Tributaries"),
