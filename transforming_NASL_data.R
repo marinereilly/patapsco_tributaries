@@ -2,6 +2,8 @@ library(NASL)
 library(dplyr)
 library(lubridate)
 library(tidyr)
+library(stringi)
+library(readxl)
 
 data1<-load_nasl("H://0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/RAW_DATA/NASL/HARRIS_PATAPSCO_052819_FINAL.xlsx")
 data2<-load_nasl("H://0_HarrisLab/1_CURRENT PROJECT FOLDERS/Patapsco/data/RAW_DATA/NASL/HARRIS_PATAPSCO_072419_FINAL.xlsx")
