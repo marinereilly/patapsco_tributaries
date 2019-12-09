@@ -3,12 +3,18 @@ library(dplyr)
 library(tidyr)
 
 pat_wide<-readRDS("patapsco_wide.rds")
-pat_wide<-pat_wide %>% 
-  select(creek:my, depth, kd,delta_sigmat,Tchla:chl_tss)
-pat_long<-pivot_longer(pat_wide, 
-                       cols = kd:chl_tss,
-                       names_to="parameter", 
-                       values_to="measurement")
+#pat_wide<-pat_wide %>% 
+  #rename(respiration=DO_conc_mg_Lhr) %>% 
+  #select(creek,station,depth, date,my:mixed,Tchla:chl_tss)
+#saveRDS(pat_wide,"patapsco_wide.rds")
+
+pat_long<-pat_wide %>% 
+  select(-mixed) %>% 
+  pivot_longer(.,cols = kd:chl_tss,
+               names_to="parameter",
+               values_to="measurement")%>% 
+  filter(!(parameter=="respiration" & depth=="surface"),
+         !(parameter=="delta_sigmat" & depth=="bottom"))
 
 pat_full<-pat_long 
 pat_full$my<-factor(pat_full$my, 
