@@ -66,3 +66,10 @@ df_join<-df_join %>%
   mutate(my=paste0(month, " ",year)) %>% 
   select(-month, -year) %>% 
   select(creek, station, depth,my,`Sample Date`, TDN:PC)
+
+
+
+df_long<-df_join %>% 
+  pivot_longer(.,cols = TDN:PC,
+               names_to="parameter",
+               values_to="measurement")
