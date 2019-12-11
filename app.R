@@ -7,6 +7,8 @@ pat_full<-readRDS("pat_long.rds")
 param_choices<-levels(as.factor(pat_full$parameter))
 creeks<-levels(as.factor(pat_full$creek))
 stations<-levels(as.factor(pat_full$station))
+vp_data<-readRDS("vertical_profiles.RDS")
+
 # describes how you look at the data/the User Interface
 ui <- fluidPage(
   titlePanel("Patapsco Tributaries"),
@@ -23,7 +25,7 @@ ui <- fluidPage(
                            "Parameter:",
                            multiple = FALSE,
                            choices= param_choices),
-               h4("For Data Table Only:"),
+               h4("For Data Table and Vertical Profiles:"),
                selectInput("crk",
                            "What Creek:", 
                            multiple = FALSE,
@@ -58,7 +60,13 @@ ui <- fluidPage(
                                  br(),
                                  br(),
                                  h3("Data"),
-                                 tableOutput("creektable"))
+                                 tableOutput("creektable")
+                                 ),
+                        tabPanel("Vertical Profiles",
+                                 h3("Plot"),
+                                 br(),
+                                 plotOutput("vp_plot")
+                                 )
                         )
             )
   )
@@ -121,5 +129,26 @@ server <- function(input, output) {
               strip.background = element_rect(colour = "black", fill = "white"),
               legend.title = element_blank())
     })
+    
+    output$vp_plot <- renderPlot({
+      vp_data %>% 
+        filter(date>=input$date_input[1]) %>% 
+        filter(date<=input$date_input[2]) %>%
+        filter(parameter==c("chl_ugL","ODO_conc","salinity",
+                            "temperature","turbidity_ntu")) %>% 
+        #filter(parameter==input$wqparameter) %>%
+        filter(creek==input$crk) %>% 
+        filter(station==input$stn) %>% 
+        select(-date) %>% 
+        ggplot(aes(x=measurement, y=sonde_depth, color=my, shape=my))+
+                 geom_point()+
+                 geom_path(size=1)+
+                 scale_y_reverse(expand = c(0, 0))+
+                 scale_x_continuous(position = "top")+
+                 theme_classic()+
+                 theme(strip.text.x = element_text(size=10, face="bold"),
+                       strip.background = element_rect(colour="black", fill="aliceblue"))+
+                 facet_grid(~parameter, scales = "free")
+      })
 }
 shinyApp(ui = ui, server = server) #this must be the last line of code
